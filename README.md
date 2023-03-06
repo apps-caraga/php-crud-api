@@ -719,6 +719,7 @@ You can tune the middleware behavior using middleware specific configuration par
 - "dbAuth.loginAfterRegistration": 1 or zero if registered users should be logged in after registration ("")
 - "dbAuth.passwordLength": Minimum length that the password must have ("12")
 - "dbAuth.sessionName": The name of the PHP session that is started ("")
+- "dbAuth.refreshSession" : Specify number of minutes after which the session data is refreshed when the /me endpoint is called. (0)
 - "jwtAuth.mode": Set to "optional" if you want to allow anonymous access ("required")
 - "jwtAuth.header": Name of the header containing the JWT token ("X-Authorization")
 - "jwtAuth.leeway": The acceptable number of seconds of clock skew ("5")
