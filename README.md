@@ -707,6 +707,7 @@ You can enable the following middleware using the "middlewares" config parameter
 - "customization": Provides handlers for request and response customization
 - "json": Support read/write of JSON strings as JSON objects/arrays
 - "xml": Translates all input and output from JSON to XML
+- "encryption": Encrypts specified columns in a table
 
 The "middlewares" config parameter is a comma separated list of enabled middlewares.
 You can tune the middleware behavior using middleware specific configuration parameters:
@@ -799,6 +800,9 @@ You can tune the middleware behavior using middleware specific configuration par
 - "json.tables": Tables to process JSON strings for ("all")
 - "json.columns": Columns to process JSON strings for ("all")
 - "xml.types": JSON types that should be added to the XML type attribute ("null,array")
+- "encryption.columns": CSV list of columns to encrypt/decrypt, in `table.column` format
+- "encryption.keyVersions": JSON-encoded array of encryption keys.
+- "encryption.activeVersion": Sets the key to be used for encryption. Must be a valid key from the keyVersions JSON-encoded array
 
 If you don't specify these parameters in the configuration, then the default values (between brackets) are used.
 
