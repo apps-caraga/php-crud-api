@@ -141,8 +141,10 @@ Related projects:
   - [PHP-CRUD-UI](https://github.com/mevdschee/php-crud-ui): Single file PHP script that adds a UI to a PHP-CRUD-API project.
   - [PHP-CRUD-ADMIN](https://github.com/mevdschee/php-crud-admin): Single file PHP script that adds a database admin interface to a PHP-CRUD-API project.
   - [PHP-SP-API](https://github.com/mevdschee/php-sp-api): Single file PHP script that adds a REST API to a SQL database.
+  - [dexie-mysql-sync](https://github.com/scriptPilot/dexie-mysql-sync): Synchronization between local IndexedDB and MySQL Database. 
   - [ra-data-treeql](https://github.com/nkappler/ra-data-treeql): NPM package that provides a [Data Provider](https://marmelab.com/react-admin/DataProviderIntroduction.html) for [React Admin](https://marmelab.com/react-admin/).
   - [scriptPilot/vueuse](https://github.com/scriptPilot/vueuse/): Vue [Composables](https://vuejs.org/guide/reusability/composables.html) in addition to [VueUse.org](https://vueuse.org/) (that support PHP-CRUD-API).
+  - [scriptPilot/add-php-backend](https://github.com/scriptPilot/add-php-backend): Add MySQL, phpMyAdmin and PHP-CRUD-API to your dev environment. 
   - [VUE-CRUD-UI](https://github.com/nlware/vue-crud-ui): Single file Vue.js script that adds a UI to a PHP-CRUD-API project.
   
 There are also ports of this script in:
@@ -596,6 +598,31 @@ of the batch failed due to an integrity violation:
     ]
 
 The response status code will always be 424 (failed dependency) in case of any failure of one of the batch operations.
+
+To insert multiple records into this table the request can be written in URL format as:
+
+    POST /records/posts
+
+The body should contain an array of records to be inserted:
+
+    [
+            {
+                "title": "Hello world!",
+                "content": "Welcome to the first post.",
+                "created": "2018-03-05T20:12:56Z"
+            },
+            {
+                "title": "Black is the new red",
+                "content": "This is the second post.",
+                "created": "2018-03-06T21:34:01Z"
+            }
+    ]
+
+The return value is also an array containing the primary keys of the newly inserted records:
+
+    [1,2] 
+
+Note that batch operation for DELETE follows the same pattern as PUT, but without a body.
 
 ### Spatial support
 
@@ -1439,6 +1466,7 @@ The following errors may be reported:
 | 1020  | 409 Conflict              | User already exists
 | 1021  | 422 Unprocessable entity  | Password too short
 | 1022  | 422 Unprocessable entity  | Username is empty
+| 1023  | 404 Not found             | Primary key not found
 | 9999  | 500 Internal server error | Unknown error 
 
 The following JSON structure is used:
@@ -1524,6 +1552,7 @@ I am testing mainly on Ubuntu and I have the following test setups:
   - (Docker) Ubuntu 18.04 with PHP 7.2, MySQL 5.7, PostgreSQL 10.4 (PostGIS 2.4) and SQLite 3.22
   - (Docker) Ubuntu 20.04 with PHP 7.4, MySQL 8.0, PostgreSQL 12.15 (PostGIS 3.0) and SQLite 3.31 and SQL Server 2019
   - (Docker) Ubuntu 22.04 with PHP 8.1, MySQL 8.0, PostgreSQL 14.2 (PostGIS 3.2) and SQLite 3.37 
+  - (Docker) Ubuntu 24.04 with PHP 8.3, MySQL 8.0, PostgreSQL 16.2 (PostGIS 3.4) and SQLite 3.45
 
 This covers not all environments (yet), so please notify me of failing tests and report your environment. 
 I will try to cover most relevant setups in the "docker" folder of the project.
@@ -1538,7 +1567,26 @@ To run the functional tests locally you may run the following commands:
 This runs the functional tests from the "tests" directory. It uses the database dumps (fixtures) and
 database configuration (config) from the corresponding subdirectories.
 
-## Nginx config example
+## Pretty URL
+
+You may "rewrite" the URL to remove the "api.php" from the URL.
+
+### Apache config example
+
+Enable mod_rewrite and add the following to your ".htaccess" file:
+
+```
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.*)$ api.php/$1 [L,QSA]
+```
+
+The ".htaccess" file needs to go in the same folder as "api.php".
+
+### Nginx config example
+
+Use the following config to serve the API under Nginx and PHP-FPM:
 
 ```
 server {
@@ -1550,7 +1598,7 @@ server {
     server_name server_domain_or_IP;
 
     location / {
-        try_files $uri $uri/ =404;
+        try_files $uri $uri/ /api.php?$args;  
     }
 
     location ~ [^/]\.php(/|$) {
@@ -1573,7 +1621,7 @@ server {
 
 Install docker using the following commands and then logout and login for the changes to take effect:
 
-    sudo apt install docker.io
+    sudo apt install docker.io docker-buildx
     sudo usermod -aG docker ${USER}
 
 To run the docker tests run "build_all.sh" and "run_all.sh" from the docker directory. The output should be:
@@ -1586,10 +1634,10 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 120 tests ran in 779 ms, 1 skipped, 0 failed
-    pgsql: 120 tests ran in 769 ms, 1 skipped, 0 failed
+    mysql: 120 tests ran in 921 ms, 1 skipped, 0 failed
+    pgsql: 120 tests ran in 1058 ms, 1 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
-    sqlite: 120 tests ran in 672 ms, 13 skipped, 0 failed
+    sqlite: 120 tests ran in 752 ms, 13 skipped, 0 failed
     ================================================
     Debian 11 (PHP 7.4)
     ================================================
@@ -1598,10 +1646,10 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 120 tests ran in 820 ms, 1 skipped, 0 failed
-    pgsql: 120 tests ran in 780 ms, 1 skipped, 0 failed
+    mysql: 120 tests ran in 914 ms, 1 skipped, 0 failed
+    pgsql: 120 tests ran in 997 ms, 1 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
-    sqlite: 120 tests ran in 681 ms, 13 skipped, 0 failed
+    sqlite: 120 tests ran in 735 ms, 13 skipped, 0 failed
     ================================================
     Debian 12 (PHP 8.2)
     ================================================
@@ -1610,10 +1658,10 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2019 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 120 tests ran in 880 ms, 1 skipped, 0 failed
-    pgsql: 120 tests ran in 796 ms, 1 skipped, 0 failed
+    mysql: 120 tests ran in 1016 ms, 1 skipped, 0 failed
+    pgsql: 120 tests ran in 1041 ms, 1 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
-    sqlite: 120 tests ran in 681 ms, 13 skipped, 0 failed
+    sqlite: 120 tests ran in 733 ms, 13 skipped, 0 failed
     ================================================
     RockyLinux 8 (PHP 7.2)
     ================================================
@@ -1622,10 +1670,10 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 120 tests ran in 835 ms, 1 skipped, 0 failed
+    mysql: 120 tests ran in 935 ms, 1 skipped, 0 failed
     pgsql: skipped, driver not loaded
     sqlsrv: skipped, driver not loaded
-    sqlite: 120 tests ran in 684 ms, 13 skipped, 0 failed
+    sqlite: 120 tests ran in 746 ms, 13 skipped, 0 failed
     ================================================
     RockyLinux 9 (PHP 8.0)
     ================================================
@@ -1634,10 +1682,10 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 120 tests ran in 825 ms, 1 skipped, 0 failed
+    mysql: 120 tests ran in 928 ms, 1 skipped, 0 failed
     pgsql: skipped, driver not loaded
     sqlsrv: skipped, driver not loaded
-    sqlite: 120 tests ran in 678 ms, 13 skipped, 0 failed
+    sqlite: 120 tests ran in 728 ms, 13 skipped, 0 failed
     ================================================
     Ubuntu 18.04 (PHP 7.2)
     ================================================
@@ -1646,10 +1694,10 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 120 tests ran in 1102 ms, 1 skipped, 0 failed
-    pgsql: 120 tests ran in 812 ms, 1 skipped, 0 failed
+    mysql: 120 tests ran in 1296 ms, 1 skipped, 0 failed
+    pgsql: 120 tests ran in 1056 ms, 1 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
-    sqlite: 120 tests ran in 710 ms, 13 skipped, 0 failed
+    sqlite: 120 tests ran in 772 ms, 13 skipped, 0 failed
     ================================================
     Ubuntu 20.04 (PHP 7.4)
     ================================================
@@ -1658,10 +1706,10 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2019 ... done
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 120 tests ran in 1256 ms, 1 skipped, 0 failed
-    pgsql: 120 tests ran in 804 ms, 1 skipped, 0 failed
-    sqlsrv: 120 tests ran in 4058 ms, 1 skipped, 0 failed
-    sqlite: 120 tests ran in 680 ms, 13 skipped, 0 failed
+    mysql: 120 tests ran in 1375 ms, 1 skipped, 0 failed
+    pgsql: 120 tests ran in 868 ms, 1 skipped, 0 failed
+    sqlsrv: 120 tests ran in 5713 ms, 1 skipped, 0 failed
+    sqlite: 120 tests ran in 733 ms, 13 skipped, 0 failed
     ================================================
     Ubuntu 22.04 (PHP 8.1)
     ================================================
@@ -1670,10 +1718,22 @@ To run the docker tests run "build_all.sh" and "run_all.sh" from the docker dire
     [3/4] Starting SQLServer 2019 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 120 tests ran in 1199 ms, 1 skipped, 0 failed
-    pgsql: 120 tests ran in 760 ms, 1 skipped, 0 failed
+    mysql: 120 tests ran in 1372 ms, 1 skipped, 0 failed
+    pgsql: 120 tests ran in 1064 ms, 1 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
-    sqlite: 120 tests ran in 668 ms, 13 skipped, 0 failed
+    sqlite: 120 tests ran in 727 ms, 13 skipped, 0 failed
+    ================================================
+    Ubuntu 24.04 (PHP 8.3)
+    ================================================
+    [1/4] Starting MySQL 8. ........ done
+    [2/4] Starting PostgreSQL 16.2 .. done
+    [3/4] Starting SQLServer 2019 ... skipped
+    [4/4] Cloning PHP-CRUD-API v2 ... skipped
+    ------------------------------------------------
+    mysql: 120 tests ran in 1344 ms, 1 skipped, 0 failed
+    pgsql: 120 tests ran in 856 ms, 1 skipped, 0 failed
+    sqlsrv: skipped, driver not loaded
+    sqlite: 120 tests ran in 722 ms, 13 skipped, 0 failed
 
 The above test run (including starting up the databases) takes less than 5 minutes on my slow laptop.
 
@@ -1695,10 +1755,10 @@ The above test run (including starting up the databases) takes less than 5 minut
     [3/4] Starting SQLServer 2017 ... skipped
     [4/4] Cloning PHP-CRUD-API v2 ... skipped
     ------------------------------------------------
-    mysql: 120 tests ran in 1102 ms, 1 skipped, 0 failed
-    pgsql: 120 tests ran in 812 ms, 1 skipped, 0 failed
+    mysql: 120 tests ran in 1296 ms, 1 skipped, 0 failed
+    pgsql: 120 tests ran in 1056 ms, 1 skipped, 0 failed
     sqlsrv: skipped, driver not loaded
-    sqlite: 120 tests ran in 710 ms, 13 skipped, 0 failed
+    sqlite: 120 tests ran in 772 ms, 13 skipped, 0 failed
     root@b7ab9472e08f:/php-crud-api# 
 
 As you can see the "run.sh" script gives you access to a prompt in the chosen docker environment.
