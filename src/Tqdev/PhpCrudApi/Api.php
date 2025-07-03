@@ -25,6 +25,7 @@ use Tqdev\PhpCrudApi\Middleware\BasicAuthMiddleware;
 use Tqdev\PhpCrudApi\Middleware\CorsMiddleware;
 use Tqdev\PhpCrudApi\Middleware\CustomizationMiddleware;
 use Tqdev\PhpCrudApi\Middleware\DbAuthMiddleware;
+use Tqdev\PhpCrudApi\Middleware\EncryptionMiddleware;
 use Tqdev\PhpCrudApi\Middleware\FirewallMiddleware;
 use Tqdev\PhpCrudApi\Middleware\IpAddressMiddleware;
 use Tqdev\PhpCrudApi\Middleware\JoinLimitsMiddleware;
@@ -134,6 +135,9 @@ class Api implements RequestHandlerInterface
                     break;
                 case 'json':
                     new JsonMiddleware($router, $responder, $config, $middleware);
+                    break;
+                case 'encryption':
+                    ew EncryptionMiddleware($router, $responder, $config, $middleware, $reflection, $db);
                     break;
             }
         }
