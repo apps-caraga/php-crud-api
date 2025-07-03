@@ -1373,6 +1373,16 @@ Outputs:
 
 This functionality is disabled by default and must be enabled using the "middlewares" configuration setting.
 
+### Encryption Middleware
+This middleware can be used to encrypt specific columns from specified tables.  
+Configuration
+`encryption.columns`: A comma-separated list of columns to encrypt, using the format, `tablename.columnname`
+Ex.   `users.firstname,users.lastname,users.ssn`
+
+`encryption.keyVersions`: A json_encoded associative array of encryption keys, where the array key (e.g. "v1", "v2") serves as a version identifier.
+This version identifier is prefixed to each encrypted data to indicate which key to use for decryption.
+
+
 ### File uploads
 
 File uploads are supported through the [FileReader API](https://caniuse.com/#feat=filereader), check out the [example](https://github.com/mevdschee/php-crud-api/blob/master/examples/clients/upload/vanilla.html).
